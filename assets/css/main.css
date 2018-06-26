@@ -36,3 +36,7 @@ span#currency-info-two {
     font-weight: 600;
     color: #f4ce42;
 }
+
+input#amount-one, input#amount-two {
+    margin-bottom: 10px;
+}

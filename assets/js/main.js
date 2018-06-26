@@ -37,7 +37,7 @@ amountOne.addEventListener('keyup', (e) => {
             .then(data => {
                 const finalResults = data.conversonResult.results;
                 Object.values(finalResults).forEach(function (result) {
-                    amountTwo.value = result.val * (amountOne.value);
+                    amountTwo.value = this.fixToTwo(result.val * (amountOne.value));
                     descriptionOne.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text} equals`;
                     descriptionTwo.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text}`;
                 });
@@ -60,7 +60,7 @@ amountTwo.addEventListener('keyup', (e) => {
             .then(data => {
                 const finalResults = data.conversonResult.results;
                 Object.values(finalResults).forEach(function (result) {
-                    amountOne.value = result.val * (amountTwo.value);
+                    amountOne.value = this.fixToTwo(result.val * (amountTwo.value));
                     descriptionOne.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text} equals`;
                     descriptionTwo.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text}`;
                 });
@@ -114,7 +114,7 @@ select.addEventListener('change', (e) => {
         .then(data => {
             const finalResults = data.conversonResult.results;
             Object.values(finalResults).forEach(function (result) {
-                amountTwo.value = result.val * (amountOne.value);
+                amountTwo.value = this.fixToTwo(result.val * (amountOne.value));
                 descriptionOne.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text} equals`;
                 descriptionTwo.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text}`;
             });
@@ -153,7 +153,7 @@ selectTwo.addEventListener('change', (e) => {
         .then(data => {
             const finalResults = data.conversonResult.results;
             Object.values(finalResults).forEach(function (result) {
-                amountOne.value = result.val * (amountTwo.value);
+                amountOne.value = this.fixToTwo(result.val * (amountTwo.value));
                 descriptionOne.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text} equals`;
                 descriptionTwo.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text}`;
             });
@@ -166,6 +166,10 @@ function clearField(){
     amountTwo.value = 0;
     descriptionOne.innerText = '';
     descriptionTwo.innerText = '';
+}
+
+function fixToTwo(ex1){
+    return ex1.toFixed(2);
 }
 
 

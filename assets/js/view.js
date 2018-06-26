@@ -76,9 +76,9 @@ class View {
                         const finalResults = data.conversonResult.results;
                         Object.values(finalResults).forEach(function (result) {
                             amountOne.value = 1;
-                            amountTwo.value = result.val;
+                            amountTwo.value = (result.val).toFixed(2);
                             descriptionOne.innerText = `1 United States Dollar equals`;
-                            descriptionTwo.innerText = `${result.val} Euro`;
+                            descriptionTwo.innerText = `${(result.val).toFixed(2)} Euro`;
                         });
                     });
 
