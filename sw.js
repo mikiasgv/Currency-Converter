@@ -1,7 +1,7 @@
 /**
  * Created by mikigv on 6/26/2018.
  */
-var staticCacheName = 'currency-converter-v78';
+var staticCacheName = 'currency-converter-v83';
 
 
 self.addEventListener('install', (event) => {
@@ -12,7 +12,6 @@ self.addEventListener('install', (event) => {
                 './index.html',
                 './assets/css/main.css',
                 './assets/js/currencyAPI.js',
-                './assets/js/view.js',
                 './assets/js/main.js',
                 './assets/image/bg1.png',
                 './assets/image/favicon-16x16.png',
