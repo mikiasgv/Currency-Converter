@@ -5,9 +5,6 @@
 //instantiate the model class
 const currencyAPI = new CurrencyAPI();
 
-//instantiate the view class
-const view = new View();
-
 //The first price text box
 const amountOne = document.getElementById('amount-one');
 //The second price text box
@@ -29,20 +26,67 @@ let a, b = '';
 
 //registering the service worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/currency-converter/sw.js', { scope: '/currency-converter/' }).then(function(reg) {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
 
-        if(reg.installing) {
-            console.log('Service worker installing');
-        } else if(reg.waiting) {
-            console.log('Service worker installed');
-        } else if(reg.active) {
-            console.log('Service worker active');
+        if(reg.waiting) {
+            updateReady(reg.waiting);
+            return;
         }
 
-    }).catch(function(error) {
+        if(reg.installing) {
+            console.log('Service worker installing')
+            reg.installing.addEventListener('statechange', () => {
+                if(this.state == 'installed'){
+                    updateReady(this);
+                    return;
+                }
+            });
+        }
+
+        reg.addEventListener('updatefound', () => {
+            reg.installing.addEventListener('statechange', function(){
+                if(this.state == 'installed'){
+                    updateReady(this);
+                    return;
+                }
+            });
+        })
+
+
+    }).catch((error) =>  {
         // registration failed
         console.log('Registration failed with ' + error);
     });
+
+    // Ensure refresh is only called once.
+    // This works around a bug in "force update on reload".
+    var refreshing;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        window.location.reload();
+        refreshing = true;
+    });
+}
+
+function updateReady(worker){
+
+    currencyAPI.showUpdateUI('New version available');
+
+    const updateMessage = document.querySelector('#update-message');
+
+    updateMessage.addEventListener('click', (e) => {
+        if(e.target && e.target.id== 'btn-refresh'){
+
+            worker.postMessage({action: 'skipWaiting'});
+
+
+        }else if(e.target && e.target.id== 'btn-cancel'){
+            setTimeout(() => {
+                document.querySelector('#update-message div').remove();
+            }, 1000);
+        }
+
+    })
 }
 
 
@@ -51,16 +95,9 @@ if ('serviceWorker' in navigator) {
 amountOne.addEventListener('keyup', (e) => {
     e.preventDefault();
 
-    if(currencyAPI.isNumberKey(e)){
-        currencyAPI.queryAPI(select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].value)
-            .then(data => {
-                const finalResults = data.conversonResult.results;
-                Object.values(finalResults).forEach(function (result) {
-                    amountTwo.value = this.fixToTwo(result.val * (amountOne.value));
-                    descriptionOne.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text} equals`;
-                    descriptionTwo.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text}`;
-                });
-            });
+    if(currencyAPI.isNumberKey(amountOne.value)){
+        currencyAPI.queryAPI(select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].value,
+            select.options[select.selectedIndex].text, selectTwo.options[selectTwo.selectedIndex].text, amountOne.value, 'amountOne');
     }else if(amountOne < 0){
         this.clearField();
     }else{
@@ -74,16 +111,8 @@ amountOne.addEventListener('keyup', (e) => {
 amountTwo.addEventListener('keyup', (e) => {
     e.preventDefault();
 
-    if(currencyAPI.isNumberKey(e)){
-        currencyAPI.queryAPI(selectTwo.options[selectTwo.selectedIndex].value, select.options[select.selectedIndex].value)
-            .then(data => {
-                const finalResults = data.conversonResult.results;
-                Object.values(finalResults).forEach(function (result) {
-                    amountOne.value = this.fixToTwo(result.val * (amountTwo.value));
-                    descriptionOne.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text} equals`;
-                    descriptionTwo.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text}`;
-                });
-            });
+    if(currencyAPI.isNumberKey(amountTwo.value)){
+        currencyAPI.queryAPI(selectTwo.options[selectTwo.selectedIndex].value, select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].text, select.options[select.selectedIndex].text, amountTwo.value, 'amountTwo');
     }else if(amountOne < 0){
         this.clearField();
     }else{
@@ -128,16 +157,10 @@ select.addEventListener('change', (e) => {
     //this will remove the focus
     select.blur();
     symbolOne.innerText = select.options[select.selectedIndex].value;
+    symbolTwo.innerText = selectTwo.options[selectTwo.selectedIndex].value;
 
-    currencyAPI.queryAPI(select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].value)
-        .then(data => {
-            const finalResults = data.conversonResult.results;
-            Object.values(finalResults).forEach(function (result) {
-                amountTwo.value = this.fixToTwo(result.val * (amountOne.value));
-                descriptionOne.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text} equals`;
-                descriptionTwo.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text}`;
-            });
-        });
+    currencyAPI.queryAPI(select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].value,
+        select.options[select.selectedIndex].text, selectTwo.options[selectTwo.selectedIndex].text, amountOne.value, 'selectOne');
 });
 
 //the below event will capture the values of the first selectbox before it is changed
@@ -166,19 +189,12 @@ selectTwo.addEventListener('change', (e) => {
     }
 
     selectTwo.blur();
+    symbolOne.innerText = select.options[select.selectedIndex].value;
     symbolTwo.innerText = selectTwo.options[selectTwo.selectedIndex].value;
 
-    currencyAPI.queryAPI(selectTwo.options[selectTwo.selectedIndex].value, select.options[select.selectedIndex].value)
-        .then(data => {
-            const finalResults = data.conversonResult.results;
-            Object.values(finalResults).forEach(function (result) {
-                amountOne.value = this.fixToTwo(result.val * (amountTwo.value));
-                descriptionOne.innerText = `${amountTwo.value} ${selectTwo.options[selectTwo.selectedIndex].text} equals`;
-                descriptionTwo.innerText = `${amountOne.value} ${select.options[select.selectedIndex].text}`;
-            });
-        });
+    currencyAPI.queryAPI(select.options[select.selectedIndex].value, selectTwo.options[selectTwo.selectedIndex].value,
+        select.options[select.selectedIndex].text, selectTwo.options[selectTwo.selectedIndex].text, amountOne.value, 'selectTwo');
 });
-
 
 function clearField(){
     amountOne.value = 0;
@@ -187,9 +203,7 @@ function clearField(){
     descriptionTwo.innerText = '';
 }
 
-function fixToTwo(ex1){
-    return ex1.toFixed(2);
-}
+
 
 
 
